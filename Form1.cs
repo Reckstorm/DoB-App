@@ -3,6 +3,7 @@ using System.Data;
 using Dapper.Contrib.Extensions;
 using Microsoft.VisualBasic.ApplicationServices;
 using System;
+using System.Windows.Forms;
 
 namespace DoB_App
 {
@@ -23,55 +24,52 @@ namespace DoB_App
 
         public void InitControl(object sender, EventArgs e)
         {
-            people = Select();
+            Select();
             control.Location = new Point(0, 0);
             RenderPeople(sender, e);
         }
 
-        public List<Person> Select()
+        public void Select()
         {
-            using (IDbConnection conn = new SqlConnection(connStr))
+            people.Clear();
+            using (DoBAppContext context = new DoBAppContext())
             {
-
-                conn.Open();
-                return conn.GetAll<Person>().ToList();
+                people.AddRange(context.Persons);
             }
         }
 
         public void Insert(Person person)
         {
-            using (IDbConnection conn = new SqlConnection(connStr))
+            using (DoBAppContext context = new DoBAppContext())
             {
-
-                conn.Open();
-                conn.Insert(person);
+                context.Persons.Add(new Person() { FirstName = person.FirstName, LastName = person.LastName, DoB = person.DoB});
+                context.SaveChanges();
             }
         }
 
         public void Delete(Person person)
         {
-            using (IDbConnection conn = new SqlConnection(connStr))
+            int idForRemove = person.ID;
+            using (DoBAppContext context = new DoBAppContext())
             {
-
-                conn.Open();
-                conn.Delete(person);
+                context.Persons.Remove(context.Persons.FirstOrDefault(x => x.ID.Equals(idForRemove)));
+                context.SaveChanges();
             }
         }
 
         public void Update(Person person)
         {
-            using (IDbConnection conn = new SqlConnection(connStr))
-            {
-
-                conn.Open();
-                conn.Update(person);
+            using (DoBAppContext context = new DoBAppContext())
+            {       
+                context.Persons.Update(person);
+                context.SaveChanges();
             }
         }
 
         public void RenderPeople(object sender, EventArgs e)
         {
             this.Controls.Clear();
-            people = Select();
+            Select();
             this.Controls.Add(control);
             int y = control.Location.Y + control.Height + 2;
             people.ForEach(person =>
